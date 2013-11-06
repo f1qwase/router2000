@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<!-- saved from url=(0038)http://193.0.174.161/test_command.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+
+<title>Test Command</title>
+<script src="http://193.0.174.161/js/ndm.js" type="text/javascript"></script>
+<script type="text/javascript"><!--
+
+function onajax(aj,state){aj.status==200?document.output.result.value=aj.responseText:document.output.result.value=["fail with state value: ",aj.status+": "+aj.statusText].join("")}ajax.onNewState(function(){var s=document.getElementById("status");s.innerHTML=ajax.state,s.className=ajax.state=="offline"?"status off":"status"});function doCommand(type){var cmd=this.command.value;if(type=="parse"||cmd.charAt(0)!="<")cmd=["<request><parse>",cmd,"</parse></request>"].join("");var req=ajax.post("/ci",cmd,onajax,null)}function cmd_keyUp(event){var event=event||window.event;event.keyCode&&event.keyCode==13&&doCommand.call(this.form,"parse")}function xmlParse(s){var xmlDoc;try{if(window.DOMParser){var parser=new DOMParser;xmlDoc=parser.parseFromString(s,"text/xml")}else xmlDoc=new ActiveXObject("Microsoft.XMLDOM"),xmlDoc.async=!1,xmlDoc.loadXML(s);return xmlDoc}catch(e){return null}}function fix_cmd(cmd){var x=cmd?cmd:"<request id='0'>\n <command name=''></command>\n</request>\n";return x.charAt(0)=="<"?x:["<request id='0'>\n <command name='",cmd,"'></command>\n</request>\n"].join("")}function no_click(){var f=this.form,xml=fix_cmd(f.command.value);if(!this.checked)xml.indexOf("</no>")&&(xml=xml.replace(/ <no>[^<]*<\/no>\n  /,""));else{var p=xml.indexOf("</config>");p&&(xml.charAt(p-1)==" "&&(xml=xml.replace(/<\/config>/," <no></no>\n </config>")),xml.charAt(p-1)==">"&&(xml=xml.replace(/<\/config>/,"\n <no></no>\n </config>"))),p=xml.indexOf("</command>"),p&&(xml.charAt(p-1)==" "&&(xml=xml.replace(/<\/command>/," <no></no>\n </command>")),xml.charAt(p-1)==">"&&(xml=xml.replace(/<\/command>/,"\n <no></no>\n </command>")))}return f.command.value=xml,!0}function req_type_click(v){var f=this.form,xml=fix_cmd(f.command.value);return v=="config"?(xml=xml.replace(/<command /,["<",v," "].join("")).replace(/<\/command>/,["</",v,">"].join("")),xml):xml=xml.replace(/<config /,["<",v," "].join("")).replace(/<\/config>/,["</",v,">"].join("")),f.command.value=xml,!0}
+//--></script>
+<style type="text/css">
+.frame{width:600px}
+.hidden{display:none}
+.status{float:right;color:#666;font-size:100%;font-family:sans-serif;margin:0 120px 0 0}
+.off{color:#c22}
+</style>
+<style>[touch-action="none"]{ -ms-touch-action: none; touch-action: none; }[touch-action="pan-x"]{ -ms-touch-action: pan-x; touch-action: pan-x; }[touch-action="pan-y"]{ -ms-touch-action: pan-y; touch-action: pan-y; }[touch-action="scroll"],[touch-action="pan-x pan-y"],[touch-action="pan-y pan-x"]{ -ms-touch-action: pan-x pan-y; touch-action: pan-x pan-y; }</style></head>
+<body>
+<form name="command_xml" action="" onsubmit="doCommand.call(this, &#39;xml&#39;); return false;">
+<div class="frame">
+<input type="checkbox" id="req_no" name="no" onclick="return no_click.call(this);"><label for="req_no">no</label>
+<input type="radio" id="req_type_cmd" name="req_type" onclick="return req_type_click.call(this,&quot;command&quot;);" value="command"><label for="req_type_cmd">command</label>
+<input type="radio" id="req_type_cfg" name="req_type" onclick="return req_type_click.call(this,&quot;config&quot;);" value="config"><label for="req_type_cfg">config</label>
+<span id="status" class="status">online</span>
+</div>
+<div class="frame">
+<textarea rows="5" cols="50" name="command" style="width:480px"></textarea>
+<input type="submit" name="x" value="Run!" style="width:100px; height:90px; vertical-align:top">
+</div>
+</form>
+<form name="command_line" action="" onsubmit="doCommand.call(this, &#39;parse&#39;); return false;">
+<div class="frame">
+<input type="text" name="command" size="80" style="width:480px" onkeyup="return cmd_keyUp.apply(this, arguments);">
+<input type="submit" name="p" value="Run!" style="width:100px;">
+</div>
+</form>
+<form name="output" action="" onsubmit="return false;">
+<div style="clear:left;">
+<textarea rows="25" cols="80" id="result" name="result"></textarea>
+</div>
+</form>
+
+</body></html>

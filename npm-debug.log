@@ -1,0 +1,50 @@
+0 info it worked if it ends with ok
+1 verbose cli [ 'C:\\Program Files\\nodejs\\\\node.exe',
+1 verbose cli   'C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js',
+1 verbose cli   'install',
+1 verbose cli   'node-http-digest' ]
+2 info using npm@1.2.0
+3 info using node@v0.8.17
+4 verbose node symlink C:\Program Files\nodejs\\node.exe
+5 verbose read json c:\xampp\htdocs\study\configurator\package.json
+6 verbose read json c:\xampp\htdocs\study\configurator\package.json
+7 verbose cache add [ 'node-http-digest', null ]
+8 silly cache add name=undefined spec="node-http-digest" args=["node-http-digest",null]
+9 verbose parsed url { pathname: 'node-http-digest',
+9 verbose parsed url   path: 'node-http-digest',
+9 verbose parsed url   href: 'node-http-digest' }
+10 silly lockFile 5ab9a095-node-http-digest node-http-digest
+11 verbose lock node-http-digest C:\Users\Tim\AppData\Roaming\npm-cache\5ab9a095-node-http-digest.lock
+12 silly lockFile 5ab9a095-node-http-digest node-http-digest
+13 verbose addNamed [ 'node-http-digest', '' ]
+14 verbose addNamed [ null, '' ]
+15 silly lockFile 836f347f-node-http-digest node-http-digest@
+16 verbose lock node-http-digest@ C:\Users\Tim\AppData\Roaming\npm-cache\836f347f-node-http-digest.lock
+17 silly addNameRange { name: 'node-http-digest', range: '', hasData: false }
+18 verbose url raw node-http-digest
+19 verbose url resolving [ 'https://registry.npmjs.org/', './node-http-digest' ]
+20 verbose url resolved https://registry.npmjs.org/node-http-digest
+21 info trying registry request attempt 1 at 01:17:35
+22 http GET https://registry.npmjs.org/node-http-digest
+23 http 404 https://registry.npmjs.org/node-http-digest
+24 silly registry.get cb [ 404,
+24 silly registry.get   { server: 'CouchDB/1.3.1 (Erlang OTP/R15B03)',
+24 silly registry.get     date: 'Tue, 01 Oct 2013 21:17:31 GMT',
+24 silly registry.get     'content-type': 'application/json',
+24 silly registry.get     'content-length': '52',
+24 silly registry.get     'cache-control': 'must-revalidate' } ]
+25 silly lockFile 836f347f-node-http-digest node-http-digest@
+26 error 404 'node-http-digest' is not in the npm registry.
+26 error 404 You should bug the author to publish it
+26 error 404
+26 error 404 Maybe try 'npm search http digest'
+26 error 404
+26 error 404 Note that you can also install from a
+26 error 404 tarball, folder, or http url, or git url.
+27 error System Windows_NT 6.1.7601
+28 error command "C:\\Program Files\\nodejs\\\\node.exe" "C:\\Program Files\\nodejs\\node_modules\\npm\\bin\\npm-cli.js" "install" "node-http-digest"
+29 error cwd c:\xampp\htdocs\study\configurator
+30 error node -v v0.8.17
+31 error npm -v 1.2.0
+32 error code E404
+33 verbose exit [ 1, true ]
