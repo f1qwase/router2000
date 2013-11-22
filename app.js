@@ -80,7 +80,6 @@ var getDhcpTable = function() {
 		name: 'ip dhcp host',
 		type: 'config',
 		parse: function(data) {
-			console.log(data);
 			return $(data).find('config').map(function() {
 				return {
 					ip: $(this).find('ip').text(),
@@ -92,8 +91,8 @@ var getDhcpTable = function() {
 }
 
 var ask = function() {
-	var defer = $.Deferred()
 	var args = Array.prototype.join.call(arguments, ', ') || 'ass'
+	var defer = $.Deferred()
 	console.log('asrgsss: ', args);
 	setTimeout(function() {
 		console.log('aaa: ' + args);
@@ -103,6 +102,68 @@ var ask = function() {
 	return defer
 }
 
-var fixIp = function() {
 
+
+// var fixIp = function() {
+
+// }
+
+var cl = function() {
+	console.log(arguments)
+	return Array.prototype.join(arguments, ', ')
 }
+
+var ___ = function(func) {
+	return function() {
+		var wrapper = $.Deferred()
+		var args = Array.prototype.slice.call(arguments) // toArray
+		var onReady = function() {
+			var result = func(args)
+			console.log("result is: " + result)
+			wrapper.resolve(result)
+		}
+
+		var deferredIndexes = []
+		var deferred = []
+		for (var i in args) {
+			if (typeof args[i] == 'object' &&  'promise' in args[i] && $.isFunction(args[i].promise)) {
+				deferredIndexes.push(i)
+				deferred.push(args[i])
+			}
+		}
+
+		console.log(deferred, args);
+
+		if (deferred.length > 0) {
+			console.log("w", deferred, $.isArray(deferred));
+			$.when.apply($, deferred).then(function() {
+				var arguments = Array.prototype.slice.call(arguments)
+				for (var i in args) {
+					if (deferredIndexes[i] != undefined) {
+						args[i] = arguments.shift()
+					}
+				}
+				onReady()
+			})
+			console.log("t");
+		}
+		else {
+			setTimeout(onReady)
+		}
+		return wrapper
+	}
+}
+
+// var ip = ___(getIp)
+// var wan = ___(getWanName).exe()
+
+// forwardSinglePort(ip, wan).exe().done(function(result) {
+// 	console.log(result)
+// })
+
+
+var wanName = getWanName()
+var dhcpTable = getDhcpTable()
+var answer = ask("a", "b")
+
+___(cl)("2", wanName, dhcpTable, "3", answer)
