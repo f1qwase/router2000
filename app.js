@@ -6,6 +6,16 @@ var ip = '193.0.174.161'
 // 	return _proxy + '?proxy=true&src=' + url
 // }
 
+
+// RemoteCommand.parameters = [
+// 	name:,
+// 	args,
+// 	parse,
+// 	success,
+// 	onFail
+// ]
+
+
 var doRemoteCommand = function(command, callback) {
 	return $.ajax({
 		type: 'POST',
@@ -24,15 +34,19 @@ var RemoteCommand = function(options) {
 	return this.execute()
 }
 RemoteCommand.prototype.defaults = {
-	type: 'command'
+	type: 'command',
+	args: {}
 }
 RemoteCommand.prototype.toString = function() {
-	return '<' + this.type + ' name="' + this.name + '"></' + this.type + '>' //TODO this.arguments.join
+	var that = this
+	return '<' + this.type + ' name="' + this.name + '">\n' +
+		Object.keys(this.args).map(function(key) { return '<' + key + '>' + that.args[key] + '</' + key + '>'}).join('\n') + ' \n' + 
+		'</' + this.type + '>' //TODO this.arguments.join
 }
 RemoteCommand.prototype.execute = function() {
 	var defer = $.Deferred()
 	var that = this
-	var text = '<request id="0">' + this + '</request>'
+	var text = '<request id=\'0\'>\n ' + this + '</request>'
 	// var text = '<request id="0"><parse>' + command.name + '</parse></request>'
 	doRemoteCommand(text, function(data) {
 		var parsed
@@ -90,12 +104,12 @@ var getDhcpTable = function() {
 	})
 }
 
+
+
 var ask = function() {
 	var args = Array.prototype.join.call(arguments, ', ') || 'ass'
 	var defer = $.Deferred()
-	console.log('asrgsss: ', args);
 	setTimeout(function() {
-		console.log('aaa: ' + args);
 		var answer = prompt('введите через ";" следующие переметры: ' + args)
 		defer.resolve.apply(defer, answer.split(';'))
 	}, 100)
@@ -104,22 +118,72 @@ var ask = function() {
 
 
 
-// var fixIp = function() {
+var fixIp = function(name, ip, mac) {
+	var knownHost = new RemoteCommand({
+		name: 'known host',
+		args: {
+			name: name,
+			ip: ip,
+			mac: mac
+		},
+		parse: function() {}
+	})
+	var hz = new RemoteCommand({
+		name: "ip dhcp host",
+		args: {
+			mac: mac,
+			ip: ip
+		},
+		parse: function() {}
+	})
+	return $.when(knownHost, hz)
+}
 
-// }
+var setNatOn = function(interfaceName) {
+	return new RemoteCommand({
+		name: "ip nat",
+		args: {
+			interface: interfaceName
+		},
+		parse: function(data) {
+			return $(data).find("message").text() == "NAT rule added."
+		}
+	})
+}
+
+var forwardSinglePort = function(portFrom, portTo, protocol, ipTo, interfaceName) {
+	return new RemoteCommand({
+		name: "ip static",
+		args: {
+			"interface": interfaceName,
+			"protocol": protocol,
+            "port-mode": "single",
+            "port": portFrom,
+            "to-address": ipTo,
+            "to-port": portTo
+		},
+		parse: function(data) {
+			$(data).find("message").text() == "static NAT rule has been added"
+		}
+	})
+}
+
+
+
 
 var cl = function() {
 	console.log(arguments)
-	return Array.prototype.join(arguments, ', ')
+	return Array.prototype.join.call(arguments, ', ')
 }
 
 var ___ = function(func) {
+	var context = this
 	return function() {
 		var wrapper = $.Deferred()
 		var args = Array.prototype.slice.call(arguments) // toArray
 		var onReady = function() {
-			var result = func(args)
-			console.log("result is: " + result)
+			var result = func.apply(context, args)
+			console.log("result is: ", result, args, func)
 			wrapper.resolve(result)
 		}
 
@@ -127,25 +191,29 @@ var ___ = function(func) {
 		var deferred = []
 		for (var i in args) {
 			if (typeof args[i] == 'object' &&  'promise' in args[i] && $.isFunction(args[i].promise)) {
-				deferredIndexes.push(i)
+				deferredIndexes[i] = i
 				deferred.push(args[i])
+				// deffered.reject(function(arguments) {
+				// 	var arguments = Array.prototype.slice.call(arguments)
+				// 	wrapper.reject.apply(wrapper, arguments)
+				// })
+				args[i].fail($.proxy(wrapper.reject, wrapper))
 			}
 		}
 
 		console.log(deferred, args);
 
 		if (deferred.length > 0) {
-			console.log("w", deferred, $.isArray(deferred));
+			// console.log("w", deferred, $.isArray(deferred));
 			$.when.apply($, deferred).then(function() {
-				var arguments = Array.prototype.slice.call(arguments)
+				var argumentss = Array.prototype.slice.call(arguments)
 				for (var i in args) {
 					if (deferredIndexes[i] != undefined) {
-						args[i] = arguments.shift()
+						args[i] = argumentss.shift()
 					}
 				}
 				onReady()
 			})
-			console.log("t");
 		}
 		else {
 			setTimeout(onReady)
@@ -160,10 +228,57 @@ var ___ = function(func) {
 // forwardSinglePort(ip, wan).exe().done(function(result) {
 // 	console.log(result)
 // })
+var getMac = ___(function(ip, dhcpTable) {
+	console.log(ip, dhcpTable)
+	// var ipIndex = dhcpTable.indexOf(function(i) {
+	// 	return i.ip == ip
+	// })
+	var i = 0
+	while (i < dhcpTable.length) {
+		if (dhcpTable[i].ip == ip) {
+			return dhcpTable[i].mac
+		}
+	}
+	return "fail"
+})
+
+var defery = function(callback) {
+	var defer = $.Deferred()
+
+}
 
 
-var wanName = getWanName()
-var dhcpTable = getDhcpTable()
-var answer = ask("a", "b")
 
-___(cl)("2", wanName, dhcpTable, "3", answer)
+
+// var answer = ask("a", "b")
+var answer = 'asd'
+// var getMac = function() {
+// 	var defer = ___(function(ip, dhcpTable) {
+// 		defer.resolve(dhcpTable[ip])
+// 	})
+// }
+
+var fixIp2 = ___(function() {
+	var dhcpTable = getDhcpTable()
+	// var ip = getMyIp(),
+	var ip = "192.168.1.34"
+	var mac = getMac(ip, dhcpTable)
+	return ___(fixIp)("defaultName", ip, mac)
+})
+
+var forwardSinglePortScenario = function() {
+	$.when(fixIp2(), setNatOn("Home")).then(function() { //откуда берем имя интерфейса?
+		var portIn = ask("входящий порт")
+		var protocol = ask("протокол (TCP/UDP)")
+		// var ip = getMyIp()
+		var ip = "192.168.1.34"
+		var wanName = getWanName()
+		___(forwardSinglePort)(portIn, portIn, protocol, ip, wanName).then(cl)
+	})
+}
+
+
+
+// ___(cl)("2", wanName, dhcpTable, "3", answer).done(function() {
+// 	console.log("aaaaaaaaaaaaaaaaaa" , arguments)
+// })
