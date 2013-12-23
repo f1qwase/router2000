@@ -15,6 +15,19 @@ var ip = '193.0.174.161'
 // 	onFail
 // ]
 
+var deferrize = function(x) {
+	if (isDeferred(x)) {
+		return x
+	}
+	else {
+		var defer = new $.Deferred()
+		return defer.resolve(x)
+	}
+}
+
+var isDeferred = function(func) {
+	return (typeof func == 'object' &&  'promise' in func && $.isFunction(func.promise))
+}
 
 var doRemoteCommand = function(command, callback) {
 	return $.ajax({
@@ -58,121 +71,8 @@ RemoteCommand.prototype.execute = function() {
 	return defer
 };
 
-parallel = function(deferreds) { // typeof deferreds must be Array
-	var defer = $.Deferred()
-	$.when.apply($, deferreds).then(function() {
-		var newArgs = Array.prototype.concat.apply([], arguments)
-		defer.resolve.apply(defer, newArgs)
-	})
-	return defer
-}
-
-
-var getMyIp = function() {
-	return new RemoteCommand({
-		name: 'whoami',
-		parse: function(data) {
-			var tag = "host"
-			return $(data).find(tag)
-		}
-	})
-}
-
-var getWanName = function() {
-	return new RemoteCommand({
-		name: 'show interface',
-		parse: function(data) {
-			return $(data).find('interface').filter(function() {
-				return $(this).find('global').text() == 'yes'
-			}).attr('name')
-		}
-	})
-}
-
-var getDhcpTable = function() {
-	return new RemoteCommand({
-		name: 'ip dhcp host',
-		type: 'config',
-		parse: function(data) {
-			return $(data).find('config').map(function() {
-				return {
-					ip: $(this).find('ip').text(),
-					mac: $(this).find('mac').text()
-				}
-			}).toArray()
-		}
-	})
-}
-
-
-
-var ask = function() {
-	var args = Array.prototype.join.call(arguments, ', ') || 'ass'
-	var defer = $.Deferred()
-	setTimeout(function() {
-		var answer = prompt('введите через ";" следующие переметры: ' + args)
-		defer.resolve.apply(defer, answer.split(';'))
-	}, 100)
-	return defer
-}
-
-
-
-var fixIp = function(name, ip, mac) {
-	var knownHost = new RemoteCommand({
-		name: 'known host',
-		args: {
-			name: name,
-			ip: ip,
-			mac: mac
-		},
-		parse: function() {}
-	})
-	var hz = new RemoteCommand({
-		name: "ip dhcp host",
-		args: {
-			mac: mac,
-			ip: ip
-		},
-		parse: function() {}
-	})
-	return $.when(knownHost, hz)
-}
-
-var setNatOn = function(interfaceName) {
-	return new RemoteCommand({
-		name: "ip nat",
-		args: {
-			interface: interfaceName
-		},
-		parse: function(data) {
-			return $(data).find("message").text() == "NAT rule added."
-		}
-	})
-}
-
-var forwardSinglePort = function(portFrom, portTo, protocol, ipTo, interfaceName) {
-	return new RemoteCommand({
-		name: "ip static",
-		args: {
-			"interface": interfaceName,
-			"protocol": protocol,
-            "port-mode": "single",
-            "port": portFrom,
-            "to-address": ipTo,
-            "to-port": portTo
-		},
-		parse: function(data) {
-			$(data).find("message").text() == "static NAT rule has been added"
-		}
-	})
-}
-
-
-
-
 var cl = function() {
-	console.log(arguments)
+	console.log('cl', arguments)
 	return Array.prototype.join.call(arguments, ', ')
 }
 
@@ -222,50 +122,6 @@ var ___ = function(func) {
 	}
 }
 
-// var ip = ___(getIp)
-// var wan = ___(getWanName).exe()
-
-// forwardSinglePort(ip, wan).exe().done(function(result) {
-// 	console.log(result)
-// })
-var getMac = ___(function(ip, dhcpTable) {
-	console.log(ip, dhcpTable)
-	// var ipIndex = dhcpTable.indexOf(function(i) {
-	// 	return i.ip == ip
-	// })
-	var i = 0
-	while (i < dhcpTable.length) {
-		if (dhcpTable[i].ip == ip) {
-			return dhcpTable[i].mac
-		}
-	}
-	return "fail"
-})
-
-var defery = function(callback) {
-	var defer = $.Deferred()
-
-}
-
-
-
-
-// var answer = ask("a", "b")
-var answer = 'asd'
-// var getMac = function() {
-// 	var defer = ___(function(ip, dhcpTable) {
-// 		defer.resolve(dhcpTable[ip])
-// 	})
-// }
-
-var fixIp2 = ___(function() {
-	var dhcpTable = getDhcpTable()
-	// var ip = getMyIp(),
-	var ip = "192.168.1.34"
-	var mac = getMac(ip, dhcpTable)
-	return ___(fixIp)("defaultName", ip, mac)
-})
-
 var forwardSinglePortScenario = function() {
 	$.when(fixIp2(), setNatOn("Home")).then(function() { //откуда берем имя интерфейса?
 		var portIn = ask("входящий порт")
@@ -277,8 +133,98 @@ var forwardSinglePortScenario = function() {
 	})
 }
 
+var Scenario = function(scenario, vendorMethods) {
+	var that = this
+	this.steps = scenario.steps.map(function(step) {
+		step.func = vendorMethods[step.type]
+		if (!step.func) throw ("bad method: " + step.type)
+		return new Step(step)
+	})
+	scenario.links.forEach(function(link) {
+		var step = that.getStep(link.to)
+		step.inLinks = step.inLinks || {}
+		step.inSuccessLinks = step.inSuccessLinks || []
+		var childStep = that.getStep(link.from)
+		if (link.port == 'success') {
+			step.inSuccessLinks.push(childStep)
+		}
+		else {
+			step.inLinks[link.port] = childStep
+		}
+	})
+}
+
+Scenario.prototype.getStep = function(id) { //type is step/link
+	var step = this.steps[_(this.steps).pluck('id').indexOf(id)]
+	if (!step) {
+		throw ('can`t find step with id ' + id)
+	}
+	return this.steps[_(this.steps).pluck('id').indexOf(id)]
+}
+
+Scenario.prototype.getInSteps = function(step) {
+	var that = this
+	return this.links.filter(function(link) {
+		return link.to == step.id
+	}).map(function(link) {
+		return {
+			value: link.port,
+			step: that.getStep(link.from)
+		}
+	})
+};
+
+var Step = function(step) {
+	$.extend(this, step)
+}
 
 
-// ___(cl)("2", wanName, dhcpTable, "3", answer).done(function() {
-// 	console.log("aaaaaaaaaaaaaaaaaa" , arguments)
-// })
+Step.prototype.process = function() {
+	// var end = this.step.filter(function(step) { return this.type == 'end'})[0]
+	var that = this
+	console.log(this.type);
+	if (this.inLinks) {
+		var defer = $.Deferred()
+		var steps = _(this.inLinks).values().concat(this.inSuccessLinks)
+		var methods = _(steps).map(function(step) {
+			try {
+				// return _.bind(step.process, step)
+				return step.process()
+			}
+			catch (e){
+				console.log(step);
+				throw e
+			}
+		})
+		var values = _(this.inLinks).keys()
+
+		$.when.apply($, methods).then(function() {
+			var args = arguments
+			var namedArgs = {}
+			console.log(args);
+			values.forEach(function(value, i) {
+				// if (value != "success") {
+					namedArgs[value] = args[i]
+				// }
+			})
+
+			console.log(namedArgs, arguments, that.type)
+			var y = that.execute(namedArgs)
+			$.when(y).then(defer.resolve)
+		})
+		return defer
+	}
+	else {
+		return that.execute()
+	}
+}
+
+Step.prototype.execute = function(args) {
+	var result = this.func(args, this.parameters)
+	// console.log(args, isDeferred(result), result, this.type);
+	return deferrize(result)
+}
+
+s = new Scenario(scenario, zyxelCom)
+
+// s.steps[3].process()

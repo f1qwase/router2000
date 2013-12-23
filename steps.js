@@ -18,7 +18,7 @@
 		// что-то еще с обработкой ошибок надо придумать
 	},
 	{
-		name: "get my IP",
+		name: "getMyIp",
 		noOutputData: false,
 		description: "get clients IP",
 		outputDataDescription: "IP"
@@ -30,7 +30,7 @@
 		outputDataDescription: "wan name"
 	},
 	{
-		name: "get dhcp table",
+		name: "getDhcpTable",
 		description: "get DHCP table in array",
 		noOutputData: false,
 		outputDataDescription: "DHCP table"
@@ -53,5 +53,15 @@
 			"ip",
 			"mac"
 		]
-	}
+	},
+	{
+		name: "getMyMac",
+		noOutputData: false,
+		description: "get clients MAC",
+		arguments: [
+			"dhcpTable",
+			"ip"
+		],
+		outputDataDescription: "MAC"
+	},
 ]
