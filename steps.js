@@ -64,4 +64,20 @@
 		],
 		outputDataDescription: "MAC"
 	},
+	{
+		name: "setNatOn",
+		noOutputData: true,
+		description: "set NAT rules ON"
+	},
+	{
+		name: "forwardSinglePort",
+		noOutputData: true,
+		description: "forwards single <portFrom> port on <wanName> interface for <protocol> protocol (TCP or UDP) to <ip> IP",
+		arguments: [
+			"wanName",
+			"protocol",
+			"portFrom",
+			"ip"
+		]
+	},
 ]
