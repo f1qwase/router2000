@@ -3,9 +3,7 @@ var zyxelCom = {
 		return new RemoteCommand({
 			name: 'whoami',
 			parse: function(data) {
-				// var tag = "host"
-				// return $(data).find(tag)
-				return '192.168.1.137'
+				return $(data).find('host').text()
 			}
 		})
 	},
@@ -33,22 +31,17 @@ var zyxelCom = {
 			}
 		})
 	},
-	// ask: function() {
-	// 	var args = Array.prototype.join.call(arguments, ', ') || 'ass'
-	// 	var defer = $.Deferred()
-	// 	setTimeout(function() {
-	// 		var answer = prompt('введите через ";" следующие переметры: ' + args)
-	// 		defer.resolve.apply(defer, answer.split(';'))
-	// 	}, 100)
-	// 	return defer
-	// },
 	ask: function(namedArguments, parameters) {
 		return prompt(parameters[0])
 	},
 	fixIp: function(namedArguments) {
 		var knownHost = new RemoteCommand({
 			name: 'known host',
-			args: namedArguments,
+			args: {
+				mac: namedArguments.mac,
+				ip: namedArguments.ip,
+				name: namedArguments.name || Math.random().toString().substr(0,7)
+			},
 			parse: function() {}
 		})
 		var hz = new RemoteCommand({
@@ -76,28 +69,18 @@ var zyxelCom = {
 		return new RemoteCommand({
 			name: "ip static",
 			args: {
-				"interface": namedArguments.wanName,
+				"interface": namedArguments.interfaceName,
 				"protocol": namedArguments.protocol,
 	            "port-mode": "single",
 	            "port": namedArguments.portFrom,
-	            "to-address": namedArguments.ip,
-	            "to-port": namedArguments.portFrom
+	            "to-address": namedArguments.ipTo,
+	            "to-port": namedArguments.portTo || namedArguments.portFrom
 			},
 			parse: function(data) {
 				$(data).find("message").text() == "static NAT rule has been added"
 			}
 		})
 	},
-	// getMyMac: ___(function(namedArguments) {
-	// 	var i = 0
-	// 	var dhcpTable = namedArguments.dhcpTable
-	// 	while (i < dhcpTable.length) {
-	// 		if (dhcpTable[i].ip == namedArguments.ip) {
-	// 			return dhcpTable[i].mac
-	// 		}
-	// 	}
-	// 	return "fail"
-	// }),
 	getMyMac: function(namedArguments) {
 		var i = 0
 		var dhcpTable = namedArguments.dhcpTable
@@ -107,14 +90,8 @@ var zyxelCom = {
 			}
 			i++
 		}
+		return "AA:BB:CC:DD:EE:01"
 	},
-	// fixIp2: ___(function() {
-	// 	var dhcpTable = getDhcpTable()
-	// 	// var ip = getMyIp(),
-	// 	var ip = "192.168.1.34"
-	// 	var mac = getMac(ip, dhcpTable)
-	// 	return ___(fixIp)("defaultName", ip, mac)
-	// }),
 	end: function() {
 		console.log("that's all, folks!")
 	}

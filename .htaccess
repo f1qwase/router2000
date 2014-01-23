@@ -3,5 +3,7 @@ RewriteBase /
 RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 #RewriteRule proxy/(.*)$ http://localhost:1337 [L,QSA]
-RewriteRule proxy/(.*) http://193.0.174.161/$1 [P]
+RewriteRule proxy/(.*) http://89.207.94.147/$1 [P]
 #ProxyPassReverse proxy http://193.0.174.161
+
+Satisfy Any
